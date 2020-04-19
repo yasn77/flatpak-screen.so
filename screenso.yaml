@@ -1,0 +1,50 @@
+app-id: so.screen.screen-desktop
+default-branch: stable
+base: org.electronjs.Electron2.BaseApp
+base-version: '19.08'
+runtime: org.freedesktop.Sdk
+runtime-version: '19.08'
+sdk: org.freedesktop.Sdk
+command: screen-desktop
+tags: [proprietary]
+desktop-file-name-suffix: ' (Flatpak)'
+separate-locales: false
+finish-args:
+  - --require-version=0.10.3
+  - --share=ipc
+  - --socket=x11
+  - --socket=pulseaudio
+  - --share=network
+  - --device=all
+  - --filesystem=host
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.freedesktop.Flatpak
+  - --env=LD_LIBRARY_PATH=/app/lib
+  - --filesystem=xdg-config/kdeglobals:ro
+  - --talk-name=com.canonical.AppMenu.Registrar
+  - --talk-name=com.canonical.AppMenu.Registrar.*
+modules:
+  - shared-modules/libsecret/libsecret.json
+  - name: screenso
+    buildsystem: simple
+    build-commands:
+      - ar x screenso.deb
+      - tar --strip-component 2 -xvf data.tar.xz -C /app
+      - echo > /app/lib/screen-desktop/chrome-sandbox
+      - rm /app/bin/screen-desktop
+      - install -D screen-desktop.sh /app/bin/screen-desktop
+      - mv /app/share/applications/screen-desktop.desktop /app/share/applications/so.screen.screen-desktop.desktop
+      - sed -e 's/Icon=screen-desktop/Icon=so.screen.screen-desktop.png/' -i /app/share/applications/so.screen.screen-desktop.desktop
+      - install -Dm644  /app/share/pixmaps/screen-desktop.png /app/share/icons/so.screen.screen-desktop.png
+
+    sources:
+      - type: file
+        dest-filename: screenso.deb
+        only-arches: [x86_64]
+        url: https://download.screen.so/desktop-app/linux/1.0.24/screen-desktop_1.0.24_amd64.deb
+        sha256: 162740015d90cc4147cc9db61ae711a75a5d874f91c780ad0440d1d2dac60953
+      - type: script
+        dest-filename: screen-desktop.sh
+        commands:
+          - zypak-wrapper /app/lib/screen-desktop/Screen
